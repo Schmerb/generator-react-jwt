@@ -38,3 +38,4 @@ MIT © [Mike Schmerbeck]()
 [coveralls-url]: https://coveralls.io/r//generator-react-jwt
 
 # generator-react-jwt
+# generator-node-jwt
