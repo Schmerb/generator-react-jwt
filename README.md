@@ -37,3 +37,4 @@ MIT © [Mike Schmerbeck]()
 [coveralls-image]: https://coveralls.io/repos//generator-react-jwt/badge.svg
 [coveralls-url]: https://coveralls.io/r//generator-react-jwt
 # generator-react-jwt
+# generator-react-jwt
