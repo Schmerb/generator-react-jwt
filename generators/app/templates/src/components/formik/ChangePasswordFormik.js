@@ -9,8 +9,8 @@ import Button from 'components/atoms/Button';
 import Checkbox from 'components/atoms/Checkbox';
 
 import { login } from 'actions/auth';
+import { updateUser } from 'actions/user';
 
-import { createUser } from 'utils/http/user';
 import useClearTimeout from 'utils/hooks/useClearTimeout';
 
 const errorStyles = {
@@ -27,32 +27,6 @@ const renderField = (type, name, placeholder) => {
     </FieldWrapper>
   );
 };
-
-// const signUserUp = ({
-//   setLoading,
-//   setLoadingText,
-//   values,
-//   setFieldError,
-//   dispatch,
-//   router,
-// }) => {
-//   const user = {
-//     firstName: values.firstName,
-//     lastName: values.lastName,
-//     email: values.email,
-//     password: values.password,
-//     rePassword: values.rePassword,
-//   };
-//   console.log({ user });
-
-//   dispatch(createUser(user))
-//     .then(res => {
-//       console.log({ res });
-//     })
-//     .catch(err => {
-//       console.log({ err });
-//     });
-// };
 
 const ChangePasswordFormik = ({
   dispatch,
@@ -99,7 +73,7 @@ const ChangePasswordFormik = ({
           timeoutSubmit = setTimeout(() => {
             setLoading(false);
             setLoadingText('');
-            updateUser()
+            dispatch(updateUser(user))
               .then(res => {
                 console.log({ res });
               })

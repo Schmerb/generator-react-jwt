@@ -14,7 +14,7 @@ import { normalizeResponseErrors } from './utils';
  * @param {String} data.firstName - Password of user account
  * @param {String} data.lastName - Password of user account
  */
-export const createUser = data => dispatch =>
+export const createUser = data =>
   new Promise((resolve, reject) => {
     const url = `${API_URL}${USERS}`;
     const options = {
@@ -32,15 +32,21 @@ export const createUser = data => dispatch =>
       .catch(err => reject(err));
   });
 
-export const updateUser = data => dispatch =>
+export const updateUser = (authToken, data) =>
   new Promise((resolve, reject) => {
-    const url = `${API_URL}${USERS}`;
+    const url = `${API_URL}${ME}`;
+
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+      formData.append(key, data[key]);
+    });
+
     const options = {
-      method: 'POST',
+      method: 'PUT',
       headers: {
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authToken}`,
       },
-      body: JSON.stringify(data),
+      body: formData,
     };
 
     fetch(url, options)
@@ -50,9 +56,8 @@ export const updateUser = data => dispatch =>
       .catch(err => reject(err));
   });
 
-export const deleteUser = () => (dispatch, getState) =>
+export const deleteUser = authToken =>
   new Promise((resolve, reject) => {
-    const { authToken } = getState().authentication;
     const url = `${API_URL}${ME}`;
     const options = {
       method: 'DELETE',

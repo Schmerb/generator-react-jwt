@@ -1,4 +1,4 @@
-# generator-react-jwt [![NPM version][https://badge.fury.io/js/generator-react-jwt.svg]][https://npmjs.org/package/generator-react-jwt] [![Build Status][travis-image]][travis-url] [![Dependency Status][daviddm-image]][daviddm-url] [![Coverage percentage][coveralls-image]][coveralls-url]
+# generator-react-jwt [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][daviddm-image]][daviddm-url] [![Coverage percentage][coveralls-image]][coveralls-url]
 
 > React frontend using JWT token authentication via Mongodb backed Node instance
 

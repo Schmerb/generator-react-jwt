@@ -17,7 +17,12 @@ const SignupModal = ({ isOpen, onRequestClose }) => {
     setLoadingText('');
   };
   return (
-    <Modal isOpen={isOpen} onRequestClose={onRequestClose}>
+    <Modal
+      isOpen={isOpen}
+      onRequestClose={onRequestClose}
+      height="auto"
+      maxHeight="1200px"
+    >
       <Spinner loading={loading} loadingText={loadingText} />
       <Container>
         <Header>

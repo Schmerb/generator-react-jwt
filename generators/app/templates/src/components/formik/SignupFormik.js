@@ -28,31 +28,45 @@ const renderField = (type, name, placeholder) => {
   );
 };
 
-// const signUserUp = ({
-//   setLoading,
-//   setLoadingText,
-//   values,
-//   setFieldError,
-//   dispatch,
-//   router,
-// }) => {
-//   const user = {
-//     firstName: values.firstName,
-//     lastName: values.lastName,
-//     email: values.email,
-//     password: values.password,
-//     rePassword: values.rePassword,
-//   };
-//   console.log({ user });
+const signUserUp = ({ values, dispatch, router, doneLoading }) => {
+  const user = {
+    firstName: values.firstName,
+    lastName: values.lastName,
+    email: values.email,
+    password: values.password,
+    // falls back to email if no username supplied
+    username: values.username || values.email,
+  };
 
-//   dispatch(createUser(user))
-//     .then(res => {
-//       console.log({ res });
-//     })
-//     .catch(err => {
-//       console.log({ err });
-//     });
-// };
+  createUser(user)
+    .then(res => {
+      doneLoading();
+      if (res && 'id' in res) {
+        // complete login
+        const loginUserObject = {
+          username: res.username,
+          password: values.password,
+          redirect: false,
+        };
+        dispatch(login(loginUserObject))
+          .then(isSuccess => {
+            doneLoading();
+            if (isSuccess) {
+              router.push('/dashboard');
+            }
+          })
+          .catch(error => {
+            doneLoading();
+            // dispatch(flashError());
+          });
+      }
+    })
+    .catch(err => {
+      doneLoading();
+      // eslint-disable-next-line
+      console.log({ err });
+    });
+};
 
 const SignupFormik = ({
   dispatch,
@@ -104,47 +118,14 @@ const SignupFormik = ({
         onSubmit={(values, { setSubmitting, setFieldError }) => {
           setLoading(true);
           setLoadingText('Signing up...');
-          const newUser = {
-            username: values.email,
-            password: values.password,
-            redirect: false,
-          };
           timeoutSubmit = setTimeout(() => {
-            dispatch(
-              createUser({
-                ...values,
-                username: values.email,
-              }),
-            )
-              .then(res => {
-                doneLoading();
-                if (res && 'id' in res) {
-                  // complete login
-                  const user = {
-                    username: values.email,
-                    password: values.password,
-                    redirect: false,
-                  };
-                  dispatch(login(user))
-                    .then(isSuccess => {
-                      setLoading(false);
-                      setLoadingText('');
-                      if (isSuccess) {
-                        router.push('/dashboard');
-                      }
-                    })
-                    .catch(error => {
-                      setLoading(false);
-                      setLoadingText('');
-                      // dispatch(flashError());
-                    });
-                }
-              })
-              .catch(err => {
-                doneLoading();
-                // eslint-disable-next-line
-                console.log({ err });
-              });
+            signUserUp({
+              doneLoading,
+              values,
+              setFieldError,
+              dispatch,
+              router,
+            });
             setSubmitting(false);
           }, 400);
         }}
@@ -165,8 +146,13 @@ const SignupFormik = ({
                   {renderField('text', 'firstName', 'First Name')}
                   {renderField('text', 'lastName', 'Last Name')}
                   {renderField('email', 'email', 'Email')}
+                  {renderField(
+                    'text',
+                    'username',
+                    'Username (optional - defaults to email)',
+                  )}
                   {renderField('password', 'password', 'Password')}
-                  {renderField('password', 'rePassword', 'Reenter Password')}
+                  {renderField('password', 'rePassword', 'Re-enter Password')}
                 </InputsWrapper>
                 {errors.server && <ServerError>{errors.server}</ServerError>}
                 <Controls>
@@ -216,6 +202,7 @@ const SignupFormik = ({
 SignupFormik.propTypes = {
   dispatch: PropTypes.func.isRequired,
   router: PropTypes.object.isRequired,
+  doneLoading: PropTypes.func,
   setLoading: PropTypes.func,
   setLoadingText: PropTypes.func,
 };

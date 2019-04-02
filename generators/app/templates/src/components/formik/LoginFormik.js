@@ -67,13 +67,14 @@ const LoginFormik = ({ dispatch, router, setLoading, setLoadingText }) => {
           let errors = {};
           if (!values.email) {
             errors.email = 'Required';
-          } else if (
-            !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)
-          ) {
-            errors.email = 'Invalid email address';
           } else if (!values.password) {
             errors.password = 'Required';
           }
+          // else if (
+          //   !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)
+          // ) {
+          //   errors.email = 'Invalid email address';
+          // }
 
           return errors;
         }}
@@ -104,7 +105,7 @@ const LoginFormik = ({ dispatch, router, setLoading, setLoadingText }) => {
             <Form>
               <Container>
                 <InputsWrapper hasError={errors.server}>
-                  {renderField('text', 'email', 'Email')}
+                  {renderField('text', 'email', 'Username or Email')}
                   {renderField('password', 'password', 'Password')}
                 </InputsWrapper>
                 {errors.server && <ServerError>{errors.server}</ServerError>}
