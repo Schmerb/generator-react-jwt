@@ -1,6 +1,6 @@
 {
   "name": "generator-react-jwt",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "React frontend using JWT token authentication via Mongodb backed Node instance",
   "homepage": "",
   "author": {
