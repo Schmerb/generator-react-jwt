@@ -46397,6 +46397,265 @@ module.exports = {
 
 /***/ }),
 
+/***/ "../node_modules/uuid/index.js":
+/*!*************************************!*\
+  !*** ../node_modules/uuid/index.js ***!
+  \*************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var v1 = __webpack_require__(/*! ./v1 */ "../node_modules/uuid/v1.js");
+var v4 = __webpack_require__(/*! ./v4 */ "../node_modules/uuid/v4.js");
+
+var uuid = v4;
+uuid.v1 = v1;
+uuid.v4 = v4;
+
+module.exports = uuid;
+
+
+/***/ }),
+
+/***/ "../node_modules/uuid/lib/bytesToUuid.js":
+/*!***********************************************!*\
+  !*** ../node_modules/uuid/lib/bytesToUuid.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+var byteToHex = [];
+for (var i = 0; i < 256; ++i) {
+  byteToHex[i] = (i + 0x100).toString(16).substr(1);
+}
+
+function bytesToUuid(buf, offset) {
+  var i = offset || 0;
+  var bth = byteToHex;
+  // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
+  return ([bth[buf[i++]], bth[buf[i++]], 
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]], '-',
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]],
+	bth[buf[i++]], bth[buf[i++]]]).join('');
+}
+
+module.exports = bytesToUuid;
+
+
+/***/ }),
+
+/***/ "../node_modules/uuid/lib/rng-browser.js":
+/*!***********************************************!*\
+  !*** ../node_modules/uuid/lib/rng-browser.js ***!
+  \***********************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+// Unique ID creation requires a high quality random # generator.  In the
+// browser this is a little complicated due to unknown quality of Math.random()
+// and inconsistent support for the `crypto` API.  We do the best we can via
+// feature-detection
+
+// getRandomValues needs to be invoked in a context where "this" is a Crypto
+// implementation. Also, find the complete implementation of crypto on IE11.
+var getRandomValues = (typeof(crypto) != 'undefined' && crypto.getRandomValues && crypto.getRandomValues.bind(crypto)) ||
+                      (typeof(msCrypto) != 'undefined' && typeof window.msCrypto.getRandomValues == 'function' && msCrypto.getRandomValues.bind(msCrypto));
+
+if (getRandomValues) {
+  // WHATWG crypto RNG - http://wiki.whatwg.org/wiki/Crypto
+  var rnds8 = new Uint8Array(16); // eslint-disable-line no-undef
+
+  module.exports = function whatwgRNG() {
+    getRandomValues(rnds8);
+    return rnds8;
+  };
+} else {
+  // Math.random()-based (RNG)
+  //
+  // If all else fails, use Math.random().  It's fast, but is of unspecified
+  // quality.
+  var rnds = new Array(16);
+
+  module.exports = function mathRNG() {
+    for (var i = 0, r; i < 16; i++) {
+      if ((i & 0x03) === 0) r = Math.random() * 0x100000000;
+      rnds[i] = r >>> ((i & 0x03) << 3) & 0xff;
+    }
+
+    return rnds;
+  };
+}
+
+
+/***/ }),
+
+/***/ "../node_modules/uuid/v1.js":
+/*!**********************************!*\
+  !*** ../node_modules/uuid/v1.js ***!
+  \**********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var rng = __webpack_require__(/*! ./lib/rng */ "../node_modules/uuid/lib/rng-browser.js");
+var bytesToUuid = __webpack_require__(/*! ./lib/bytesToUuid */ "../node_modules/uuid/lib/bytesToUuid.js");
+
+// **`v1()` - Generate time-based UUID**
+//
+// Inspired by https://github.com/LiosK/UUID.js
+// and http://docs.python.org/library/uuid.html
+
+var _nodeId;
+var _clockseq;
+
+// Previous uuid creation time
+var _lastMSecs = 0;
+var _lastNSecs = 0;
+
+// See https://github.com/broofa/node-uuid for API details
+function v1(options, buf, offset) {
+  var i = buf && offset || 0;
+  var b = buf || [];
+
+  options = options || {};
+  var node = options.node || _nodeId;
+  var clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq;
+
+  // node and clockseq need to be initialized to random values if they're not
+  // specified.  We do this lazily to minimize issues related to insufficient
+  // system entropy.  See #189
+  if (node == null || clockseq == null) {
+    var seedBytes = rng();
+    if (node == null) {
+      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+      node = _nodeId = [
+        seedBytes[0] | 0x01,
+        seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]
+      ];
+    }
+    if (clockseq == null) {
+      // Per 4.2.2, randomize (14 bit) clockseq
+      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
+    }
+  }
+
+  // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+  var msecs = options.msecs !== undefined ? options.msecs : new Date().getTime();
+
+  // Per 4.2.1.2, use count of uuid's generated during the current clock
+  // cycle to simulate higher resolution clock
+  var nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1;
+
+  // Time since last uuid creation (in msecs)
+  var dt = (msecs - _lastMSecs) + (nsecs - _lastNSecs)/10000;
+
+  // Per 4.2.1.2, Bump clockseq on clock regression
+  if (dt < 0 && options.clockseq === undefined) {
+    clockseq = clockseq + 1 & 0x3fff;
+  }
+
+  // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+  // time interval
+  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
+    nsecs = 0;
+  }
+
+  // Per 4.2.1.2 Throw error if too many uuids are requested
+  if (nsecs >= 10000) {
+    throw new Error('uuid.v1(): Can\'t create more than 10M uuids/sec');
+  }
+
+  _lastMSecs = msecs;
+  _lastNSecs = nsecs;
+  _clockseq = clockseq;
+
+  // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+  msecs += 12219292800000;
+
+  // `time_low`
+  var tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+  b[i++] = tl >>> 24 & 0xff;
+  b[i++] = tl >>> 16 & 0xff;
+  b[i++] = tl >>> 8 & 0xff;
+  b[i++] = tl & 0xff;
+
+  // `time_mid`
+  var tmh = (msecs / 0x100000000 * 10000) & 0xfffffff;
+  b[i++] = tmh >>> 8 & 0xff;
+  b[i++] = tmh & 0xff;
+
+  // `time_high_and_version`
+  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+  b[i++] = tmh >>> 16 & 0xff;
+
+  // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+  b[i++] = clockseq >>> 8 | 0x80;
+
+  // `clock_seq_low`
+  b[i++] = clockseq & 0xff;
+
+  // `node`
+  for (var n = 0; n < 6; ++n) {
+    b[i + n] = node[n];
+  }
+
+  return buf ? buf : bytesToUuid(b);
+}
+
+module.exports = v1;
+
+
+/***/ }),
+
+/***/ "../node_modules/uuid/v4.js":
+/*!**********************************!*\
+  !*** ../node_modules/uuid/v4.js ***!
+  \**********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var rng = __webpack_require__(/*! ./lib/rng */ "../node_modules/uuid/lib/rng-browser.js");
+var bytesToUuid = __webpack_require__(/*! ./lib/bytesToUuid */ "../node_modules/uuid/lib/bytesToUuid.js");
+
+function v4(options, buf, offset) {
+  var i = buf && offset || 0;
+
+  if (typeof(options) == 'string') {
+    buf = options === 'binary' ? new Array(16) : null;
+    options = null;
+  }
+  options = options || {};
+
+  var rnds = options.random || (options.rng || rng)();
+
+  // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+  rnds[6] = (rnds[6] & 0x0f) | 0x40;
+  rnds[8] = (rnds[8] & 0x3f) | 0x80;
+
+  // Copy bytes to buffer, if provided
+  if (buf) {
+    for (var ii = 0; ii < 16; ++ii) {
+      buf[i + ii] = rnds[ii];
+    }
+  }
+
+  return buf || bytesToUuid(rnds);
+}
+
+module.exports = v4;
+
+
+/***/ }),
+
 /***/ "../node_modules/webpack/buildin/amd-define.js":
 /*!*****************************************************!*\
   !*** ../node_modules/webpack/buildin/amd-define.js ***!
@@ -46604,8 +46863,8 @@ var login = function login(_ref) {
         return function (_x) {
           return _ref2.apply(this, arguments);
         };
-      }()).catch(function (error) {
-        reject(error);
+      }()).catch(function (err) {
+        return reject(err);
       });
     });
   };
@@ -46656,6 +46915,67 @@ var checkForAuthToken = function checkForAuthToken() {
         return _ref3.apply(this, arguments);
       };
     }());
+  };
+};
+
+/***/ }),
+
+/***/ "./actions/flashMessage.js":
+/*!*********************************!*\
+  !*** ./actions/flashMessage.js ***!
+  \*********************************/
+/*! exports provided: ADD_FLASH_MESSAGE, flashMessage, flashSuccess, flashError, REMOVE_FLASH_MESSAGE, removeFlashMessage */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ADD_FLASH_MESSAGE", function() { return ADD_FLASH_MESSAGE; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "flashMessage", function() { return flashMessage; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "flashSuccess", function() { return flashSuccess; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "flashError", function() { return flashError; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "REMOVE_FLASH_MESSAGE", function() { return REMOVE_FLASH_MESSAGE; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "removeFlashMessage", function() { return removeFlashMessage; });
+/* harmony import */ var uuid__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! uuid */ "../node_modules/uuid/index.js");
+/* harmony import */ var uuid__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(uuid__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _utils_text__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils/text */ "./utils/text.js");
+
+
+var ADD_FLASH_MESSAGE = 'ADD_FLASH_MESSAGE';
+var flashMessage = function flashMessage(message) {
+  var messageType = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'success';
+  var options = arguments.length > 2 ? arguments[2] : undefined;
+  return {
+    type: ADD_FLASH_MESSAGE,
+    messageType: messageType,
+    message: message,
+    options: options,
+    // used to remove specific message from store
+    // on animationEnd and onDismissal
+    id: uuid__WEBPACK_IMPORTED_MODULE_0___default()()
+  };
+};
+var flashSuccess = function flashSuccess() {
+  var message = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'Success';
+  var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  return function (dispatch) {
+    dispatch(flashMessage(message, 'success', opts));
+  };
+}; // Can be called with message arg
+// OR
+// without and use generic error message
+
+var flashError = function flashError() {
+  var message = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _utils_text__WEBPACK_IMPORTED_MODULE_1__["GENERAL_ERROR"];
+  var opts = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  return function (dispatch) {
+    dispatch(flashMessage(message, 'error', opts));
+  };
+};
+var REMOVE_FLASH_MESSAGE = 'REMOVE_FLASH_MESSAGE';
+var removeFlashMessage = function removeFlashMessage(id) {
+  return {
+    type: REMOVE_FLASH_MESSAGE,
+    id: id
   };
 };
 
@@ -47198,18 +47518,12 @@ function (_PureComponent) {
           visible = _this$props.visible,
           fill = _this$props.fill,
           emptyFill = _this$props.emptyFill,
-          CustomLabel = _this$props.CustomLabel;
+          renderLabel = _this$props.renderLabel;
       var IconComponent = checked ? components_icons_Checkbox__WEBPACK_IMPORTED_MODULE_11__["CheckboxChecked"] : outline ? components_icons_Checkmark__WEBPACK_IMPORTED_MODULE_12__["default"] : components_icons_Checkbox__WEBPACK_IMPORTED_MODULE_11__["Checkbox"];
       var labelComponent;
 
-      if (CustomLabel) {
-        labelComponent = react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement(CustomLabel, {
-          __source: {
-            fileName: _jsxFileName,
-            lineNumber: 47
-          },
-          __self: this
-        });
+      if (renderLabel) {
+        labelComponent = renderLabel();
       } else if (label) {
         labelComponent = react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement("span", {
           __source: {
@@ -47427,7 +47741,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var components_atoms_Button__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! components/atoms/Button */ "./components/atoms/Button.js");
 /* harmony import */ var components_atoms_Checkbox__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! components/atoms/Checkbox */ "./components/atoms/Checkbox.js");
 /* harmony import */ var actions_auth__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! actions/auth */ "./actions/auth.js");
-/* harmony import */ var utils_cookies__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! utils/cookies */ "./utils/cookies.js");
+/* harmony import */ var actions_flashMessage__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! actions/flashMessage */ "./actions/flashMessage.js");
+/* harmony import */ var utils_cookies__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! utils/cookies */ "./utils/cookies.js");
 
 
 var _jsxFileName = "/Users/michaelschmerbeck/yeoman/client/src/components/formik/LoginFormik.js";
@@ -47440,7 +47755,7 @@ var _jsxFileName = "/Users/michaelschmerbeck/yeoman/client/src/components/formik
 
 
 
- // import { login } from 'utils/http/auth';
+
 
 var errorStyles = {
   color: 'red',
@@ -47490,7 +47805,7 @@ var logUserIn = function logUserIn(_ref) {
       rememberMe = values.rememberMe;
 
   if (typeof rememberMe !== 'undefined') {
-    Object(utils_cookies__WEBPACK_IMPORTED_MODULE_11__["setCookie"])('rememberMe', rememberMe);
+    Object(utils_cookies__WEBPACK_IMPORTED_MODULE_12__["setCookie"])('rememberMe', rememberMe);
   }
 
   dispatch(Object(actions_auth__WEBPACK_IMPORTED_MODULE_10__["login"])({
@@ -47498,11 +47813,20 @@ var logUserIn = function logUserIn(_ref) {
     password: password,
     router: router
   })).then(function (res) {
+    console.log({
+      res: res
+    });
     setLoading(false);
     setLoadingText('');
+    dispatch(Object(actions_flashMessage__WEBPACK_IMPORTED_MODULE_11__["flashSuccess"])('Successfully logged in!'));
   }).catch(function (error) {
     setLoading(false);
-    setLoadingText(''); // dispatch(flashError());
+    setLoadingText('');
+
+    if (error.status === 401) {
+      dispatch(Object(actions_flashMessage__WEBPACK_IMPORTED_MODULE_11__["flashError"])("".concat(error.message, " -- Username and/or Password Incorrect.")));
+      setFieldError('server', 'Username and/or Password Incorrect.');
+    }
   });
 };
 
@@ -47511,12 +47835,12 @@ var LoginFormik = function LoginFormik(_ref2) {
       router = _ref2.router,
       setLoading = _ref2.setLoading,
       setLoadingText = _ref2.setLoadingText;
-  var rememberMe = Object(utils_cookies__WEBPACK_IMPORTED_MODULE_11__["getCookie"])('rememberMe');
+  var rememberMe = Object(utils_cookies__WEBPACK_IMPORTED_MODULE_12__["getCookie"])('rememberMe');
   var submitText = 'submitText';
   return react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(FormikContainer, {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 63
+      lineNumber: 70
     },
     __self: this
   }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_7__["Formik"], {
@@ -47530,14 +47854,12 @@ var LoginFormik = function LoginFormik(_ref2) {
 
       if (!values.email) {
         errors.email = 'Required';
+      } else if (values.email.includes('@') && !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)) {
+        // can be username, so check if @ symbol exists to validate email
+        errors.email = 'Invalid email address';
       } else if (!values.password) {
         errors.password = 'Required';
-      } // else if (
-      //   !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(values.email)
-      // ) {
-      //   errors.email = 'Invalid email address';
-      // }
-
+      }
 
       return errors;
     },
@@ -47573,7 +47895,7 @@ var LoginFormik = function LoginFormik(_ref2) {
     },
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 64
+      lineNumber: 71
     },
     __self: this
   }, function (_ref5) {
@@ -47587,38 +47909,38 @@ var LoginFormik = function LoginFormik(_ref2) {
     return react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_7__["Form"], {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 105
+        lineNumber: 113
       },
       __self: this
     }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(Container, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 106
+        lineNumber: 114
       },
       __self: this
     }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(InputsWrapper, {
       hasError: errors.server,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 107
+        lineNumber: 115
       },
       __self: this
     }, renderField('text', 'email', 'Username or Email'), renderField('password', 'password', 'Password')), errors.server && react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(ServerError, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 111
+        lineNumber: 119
       },
       __self: this
     }, errors.server), react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(Controls, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 112
+        lineNumber: 120
       },
       __self: this
     }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(FieldWrapper, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 113
+        lineNumber: 121
       },
       __self: this
     }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_7__["Field"], {
@@ -47640,7 +47962,7 @@ var LoginFormik = function LoginFormik(_ref2) {
       },
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 114
+        lineNumber: 122
       },
       __self: this
     }), showError && errors.checkbox && react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(ServerError, {
@@ -47650,13 +47972,13 @@ var LoginFormik = function LoginFormik(_ref2) {
       },
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 130
+        lineNumber: 138
       },
       __self: this
     }, errors.checkbox)), react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(BottomBtnWrapper, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 137
+        lineNumber: 145
       },
       __self: this
     }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(components_atoms_Button__WEBPACK_IMPORTED_MODULE_8__["default"], {
@@ -47669,7 +47991,7 @@ var LoginFormik = function LoginFormik(_ref2) {
       disabled: isSubmitting,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 138
+        lineNumber: 146
       },
       __self: this
     }, submitText || 'Submit')))));
@@ -47706,12 +48028,12 @@ var InputsWrapper = styled_components__WEBPACK_IMPORTED_MODULE_6__["default"].di
   componentId: "ecajyy-3"
 })(["border-left:5px solid transparent;padding:2px;transition:border-color 0.3s;", ""], function (_ref6) {
   var hasError = _ref6.hasError;
-  return hasError && Object(styled_components__WEBPACK_IMPORTED_MODULE_6__["css"])(["border-color:'red';"]);
+  return hasError && Object(styled_components__WEBPACK_IMPORTED_MODULE_6__["css"])(["border-color:red;"]);
 });
 var ServerError = styled_components__WEBPACK_IMPORTED_MODULE_6__["default"].div.withConfig({
   displayName: "LoginFormik__ServerError",
   componentId: "ecajyy-4"
-})(["color:'red';"]);
+})(["margin-top:10px;color:red;"]);
 var FieldWrapper = styled_components__WEBPACK_IMPORTED_MODULE_6__["default"].div.withConfig({
   displayName: "LoginFormik__FieldWrapper",
   componentId: "ecajyy-5"
@@ -47732,21 +48054,28 @@ var BottomBtnWrapper = styled_components__WEBPACK_IMPORTED_MODULE_6__["default"]
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "../node_modules/react/index.js");
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! react-redux */ "../node_modules/react-redux/es/index.js");
-/* harmony import */ var next_router__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! next/router */ "../node_modules/next/dist/client/router.js");
-/* harmony import */ var next_router__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(next_router__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! prop-types */ "../node_modules/prop-types/index.js");
-/* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(prop_types__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! styled-components */ "../node_modules/styled-components/dist/styled-components.browser.esm.js");
-/* harmony import */ var formik__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! formik */ "../node_modules/formik/dist/formik.esm.js");
-/* harmony import */ var components_atoms_Button__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! components/atoms/Button */ "./components/atoms/Button.js");
-/* harmony import */ var components_atoms_Checkbox__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! components/atoms/Checkbox */ "./components/atoms/Checkbox.js");
-/* harmony import */ var actions_auth__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! actions/auth */ "./actions/auth.js");
-/* harmony import */ var utils_http_user__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! utils/http/user */ "./utils/http/user.js");
-/* harmony import */ var utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! utils/hooks/useClearTimeout */ "./utils/hooks/useClearTimeout.js");
+/* harmony import */ var _babel_runtime_corejs2_regenerator__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime-corejs2/regenerator */ "../node_modules/@babel/runtime-corejs2/regenerator/index.js");
+/* harmony import */ var _babel_runtime_corejs2_regenerator__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_corejs2_regenerator__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _babel_runtime_corejs2_helpers_esm_asyncToGenerator__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/asyncToGenerator */ "../node_modules/@babel/runtime-corejs2/helpers/esm/asyncToGenerator.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react */ "../node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-redux */ "../node_modules/react-redux/es/index.js");
+/* harmony import */ var next_router__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! next/router */ "../node_modules/next/dist/client/router.js");
+/* harmony import */ var next_router__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(next_router__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! prop-types */ "../node_modules/prop-types/index.js");
+/* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(prop_types__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! styled-components */ "../node_modules/styled-components/dist/styled-components.browser.esm.js");
+/* harmony import */ var formik__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! formik */ "../node_modules/formik/dist/formik.esm.js");
+/* harmony import */ var components_atoms_Button__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! components/atoms/Button */ "./components/atoms/Button.js");
+/* harmony import */ var components_atoms_Checkbox__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! components/atoms/Checkbox */ "./components/atoms/Checkbox.js");
+/* harmony import */ var actions_auth__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! actions/auth */ "./actions/auth.js");
+/* harmony import */ var actions_flashMessage__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! actions/flashMessage */ "./actions/flashMessage.js");
+/* harmony import */ var utils_http_user__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! utils/http/user */ "./utils/http/user.js");
+/* harmony import */ var utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! utils/hooks/useClearTimeout */ "./utils/hooks/useClearTimeout.js");
+
+
 var _jsxFileName = "/Users/michaelschmerbeck/yeoman/client/src/components/formik/SignupFormik.js";
+
 
 
 
@@ -47765,28 +48094,28 @@ var errorStyles = {
 };
 
 var renderField = function renderField(type, name, placeholder) {
-  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldWrapper, {
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 24
-    },
-    __self: this
-  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_5__["Field"], {
-    type: type,
-    name: name,
-    placeholder: placeholder,
+  return react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(FieldWrapper, {
     __source: {
       fileName: _jsxFileName,
       lineNumber: 25
     },
     __self: this
-  }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_5__["ErrorMessage"], {
+  }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_7__["Field"], {
+    type: type,
+    name: name,
+    placeholder: placeholder,
+    __source: {
+      fileName: _jsxFileName,
+      lineNumber: 26
+    },
+    __self: this
+  }), react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_7__["ErrorMessage"], {
     name: name,
     component: "div",
     style: errorStyles,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 26
+      lineNumber: 27
     },
     __self: this
   }));
@@ -47796,7 +48125,8 @@ var signUserUp = function signUserUp(_ref) {
   var values = _ref.values,
       dispatch = _ref.dispatch,
       router = _ref.router,
-      doneLoading = _ref.doneLoading;
+      doneLoading = _ref.doneLoading,
+      setFieldError = _ref.setFieldError;
   var user = {
     firstName: values.firstName,
     lastName: values.lastName,
@@ -47805,7 +48135,7 @@ var signUserUp = function signUserUp(_ref) {
     // falls back to email if no username supplied
     username: values.username || values.email
   };
-  Object(utils_http_user__WEBPACK_IMPORTED_MODULE_9__["createUser"])(user).then(function (res) {
+  Object(utils_http_user__WEBPACK_IMPORTED_MODULE_12__["createUser"])(user).then(function (res) {
     doneLoading();
 
     if (res && 'id' in res) {
@@ -47815,14 +48145,43 @@ var signUserUp = function signUserUp(_ref) {
         password: values.password,
         redirect: false
       };
-      dispatch(Object(actions_auth__WEBPACK_IMPORTED_MODULE_8__["login"])(loginUserObject)).then(function (isSuccess) {
-        doneLoading();
+      dispatch(Object(actions_auth__WEBPACK_IMPORTED_MODULE_10__["login"])(loginUserObject)).then(
+      /*#__PURE__*/
+      function () {
+        var _ref2 = Object(_babel_runtime_corejs2_helpers_esm_asyncToGenerator__WEBPACK_IMPORTED_MODULE_1__["default"])(
+        /*#__PURE__*/
+        _babel_runtime_corejs2_regenerator__WEBPACK_IMPORTED_MODULE_0___default.a.mark(function _callee(isSuccess) {
+          return _babel_runtime_corejs2_regenerator__WEBPACK_IMPORTED_MODULE_0___default.a.wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  doneLoading();
 
-        if (isSuccess) {
-          router.push('/dashboard');
-        }
-      }).catch(function (error) {
-        doneLoading(); // dispatch(flashError());
+                  if (!isSuccess) {
+                    _context.next = 5;
+                    break;
+                  }
+
+                  _context.next = 4;
+                  return router.push('/dashboard');
+
+                case 4:
+                  dispatch(Object(actions_flashMessage__WEBPACK_IMPORTED_MODULE_11__["flashSuccess"])('Successfully created new user!'));
+
+                case 5:
+                case "end":
+                  return _context.stop();
+              }
+            }
+          }, _callee);
+        }));
+
+        return function (_x) {
+          return _ref2.apply(this, arguments);
+        };
+      }()).catch(function (error) {
+        doneLoading();
+        dispatch(Object(actions_flashMessage__WEBPACK_IMPORTED_MODULE_11__["flashError"])('Something went wrong trying to log new user in.'));
       });
     }
   }).catch(function (err) {
@@ -47831,28 +48190,31 @@ var signUserUp = function signUserUp(_ref) {
     console.log({
       err: err
     });
+    setFieldError(err.location, err.message);
+    dispatch(Object(actions_flashMessage__WEBPACK_IMPORTED_MODULE_11__["flashError"])(err.message));
   });
 };
 
-var SignupFormik = function SignupFormik(_ref2) {
-  var dispatch = _ref2.dispatch,
-      router = _ref2.router,
-      setLoading = _ref2.setLoading,
-      setLoadingText = _ref2.setLoadingText,
-      doneLoading = _ref2.doneLoading;
+var SignupFormik = function SignupFormik(_ref3) {
+  var dispatch = _ref3.dispatch,
+      router = _ref3.router,
+      setLoading = _ref3.setLoading,
+      setLoadingText = _ref3.setLoadingText,
+      doneLoading = _ref3.doneLoading;
   var submitText = 'submitText';
   var timeoutSubmit;
-  Object(utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_10__["default"])(timeoutSubmit);
-  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FormikContainer, {
+  Object(utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_13__["default"])(timeoutSubmit);
+  return react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(FormikContainer, {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 82
+      lineNumber: 94
     },
     __self: this
-  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_5__["Formik"], {
+  }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_7__["Formik"], {
     initialValues: {
       firstName: '',
       lastName: '',
+      username: '',
       email: '',
       password: '',
       rePassword: '',
@@ -47883,9 +48245,9 @@ var SignupFormik = function SignupFormik(_ref2) {
 
       return errors;
     },
-    onSubmit: function onSubmit(values, _ref3) {
-      var setSubmitting = _ref3.setSubmitting,
-          setFieldError = _ref3.setFieldError;
+    onSubmit: function onSubmit(values, _ref4) {
+      var setSubmitting = _ref4.setSubmitting,
+          setFieldError = _ref4.setFieldError;
       setLoading(true);
       setLoadingText('Signing up...');
       timeoutSubmit = setTimeout(function () {
@@ -47901,55 +48263,55 @@ var SignupFormik = function SignupFormik(_ref2) {
     },
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 83
+      lineNumber: 95
     },
     __self: this
-  }, function (_ref4) {
-    var isSubmitting = _ref4.isSubmitting,
-        setFieldValue = _ref4.setFieldValue,
-        errors = _ref4.errors,
-        values = _ref4.values,
-        touched = _ref4.touched,
-        submitCount = _ref4.submitCount;
+  }, function (_ref5) {
+    var isSubmitting = _ref5.isSubmitting,
+        setFieldValue = _ref5.setFieldValue,
+        errors = _ref5.errors,
+        values = _ref5.values,
+        touched = _ref5.touched,
+        submitCount = _ref5.submitCount;
     var showError = submitCount > 0 || touched.checkbox;
-    return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_5__["Form"], {
+    return react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_7__["Form"], {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 143
+        lineNumber: 156
       },
       __self: this
-    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(Container, {
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 144
-      },
-      __self: this
-    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(InputsWrapper, {
-      hasError: errors.server,
-      __source: {
-        fileName: _jsxFileName,
-        lineNumber: 145
-      },
-      __self: this
-    }, renderField('text', 'firstName', 'First Name'), renderField('text', 'lastName', 'Last Name'), renderField('email', 'email', 'Email'), renderField('text', 'username', 'Username (optional - defaults to email)'), renderField('password', 'password', 'Password'), renderField('password', 'rePassword', 'Re-enter Password')), errors.server && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(ServerError, {
+    }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(Container, {
       __source: {
         fileName: _jsxFileName,
         lineNumber: 157
       },
       __self: this
-    }, errors.server), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(Controls, {
+    }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(InputsWrapper, {
+      hasError: errors.server,
       __source: {
         fileName: _jsxFileName,
         lineNumber: 158
       },
       __self: this
-    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldWrapper, {
+    }, renderField('text', 'firstName', 'First Name'), renderField('text', 'lastName', 'Last Name'), renderField('email', 'email', 'Email'), renderField('text', 'username', 'Username (optional - defaults to email)'), renderField('password', 'password', 'Password'), renderField('password', 'rePassword', 'Re-enter Password')), errors.server && react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(ServerError, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 159
+        lineNumber: 170
       },
       __self: this
-    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_5__["Field"], {
+    }, errors.server), react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(Controls, {
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 171
+      },
+      __self: this
+    }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(FieldWrapper, {
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 172
+      },
+      __self: this
+    }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_7__["Field"], {
       visible: true,
       initialValue: values.checkbox,
       value: values.checkbox,
@@ -47961,35 +48323,55 @@ var SignupFormik = function SignupFormik(_ref2) {
       ,
       fill: "cornflowerblue",
       label: "Label",
-      component: components_atoms_Checkbox__WEBPACK_IMPORTED_MODULE_7__["default"],
-      CustomLabel: function CustomLabel() {
-        return 'CheckboxCustomLabel';
+      component: components_atoms_Checkbox__WEBPACK_IMPORTED_MODULE_9__["default"],
+      renderLabel: function renderLabel() {
+        return react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement("span", {
+          __source: {
+            fileName: _jsxFileName,
+            lineNumber: 184
+          },
+          __self: this
+        }, "I agree to ", react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement("a", {
+          href: "#!",
+          __source: {
+            fileName: _jsxFileName,
+            lineNumber: 185
+          },
+          __self: this
+        }, "Terms"), " &", react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement("a", {
+          href: "#!",
+          __source: {
+            fileName: _jsxFileName,
+            lineNumber: 186
+          },
+          __self: this
+        }, "Conditions"));
       },
       onChange: function onChange(checked) {
         setFieldValue('checkbox', checked);
       },
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 160
+        lineNumber: 173
       },
       __self: this
-    }), showError && errors.checkbox && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(ServerError, {
+    }), showError && errors.checkbox && react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(ServerError, {
       style: {
         marginLeft: '7px',
         marginTop: '7px'
       },
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 176
+        lineNumber: 194
       },
       __self: this
-    }, errors.checkbox)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(BottomBtnWrapper, {
+    }, errors.checkbox)), react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(BottomBtnWrapper, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 183
+        lineNumber: 201
       },
       __self: this
-    }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(components_atoms_Button__WEBPACK_IMPORTED_MODULE_6__["default"], {
+    }, react__WEBPACK_IMPORTED_MODULE_2___default.a.createElement(components_atoms_Button__WEBPACK_IMPORTED_MODULE_8__["default"], {
       style: {
         width: '100%',
         borderRadius: '3px'
@@ -47999,7 +48381,7 @@ var SignupFormik = function SignupFormik(_ref2) {
       disabled: isSubmitting,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 184
+        lineNumber: 202
       },
       __self: this
     }, submitText || 'Submit')))));
@@ -48007,47 +48389,47 @@ var SignupFormik = function SignupFormik(_ref2) {
 };
 
 SignupFormik.propTypes = {
-  dispatch: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.func.isRequired,
-  router: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.object.isRequired,
-  doneLoading: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.func,
-  setLoading: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.func,
-  setLoadingText: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.func
+  dispatch: prop_types__WEBPACK_IMPORTED_MODULE_5___default.a.func.isRequired,
+  router: prop_types__WEBPACK_IMPORTED_MODULE_5___default.a.object.isRequired,
+  doneLoading: prop_types__WEBPACK_IMPORTED_MODULE_5___default.a.func,
+  setLoading: prop_types__WEBPACK_IMPORTED_MODULE_5___default.a.func,
+  setLoadingText: prop_types__WEBPACK_IMPORTED_MODULE_5___default.a.func
 };
 
 var mapStateToProps = function mapStateToProps(state) {
   return {};
 };
 
-/* harmony default export */ __webpack_exports__["default"] = (Object(next_router__WEBPACK_IMPORTED_MODULE_2__["withRouter"])(Object(react_redux__WEBPACK_IMPORTED_MODULE_1__["connect"])(mapStateToProps)(SignupFormik)));
-var grow = Object(styled_components__WEBPACK_IMPORTED_MODULE_4__["css"])(["display:flex;flex-direction:column;flex-grow:1;"]);
-var FormikContainer = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div.withConfig({
+/* harmony default export */ __webpack_exports__["default"] = (Object(next_router__WEBPACK_IMPORTED_MODULE_4__["withRouter"])(Object(react_redux__WEBPACK_IMPORTED_MODULE_3__["connect"])(mapStateToProps)(SignupFormik)));
+var grow = Object(styled_components__WEBPACK_IMPORTED_MODULE_6__["css"])(["display:flex;flex-direction:column;flex-grow:1;"]);
+var FormikContainer = styled_components__WEBPACK_IMPORTED_MODULE_6__["default"].div.withConfig({
   displayName: "SignupFormik__FormikContainer",
   componentId: "sc-1kggeb7-0"
 })(["", " text-align:left;"], grow);
-var Container = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div.withConfig({
+var Container = styled_components__WEBPACK_IMPORTED_MODULE_6__["default"].div.withConfig({
   displayName: "SignupFormik__Container",
   componentId: "sc-1kggeb7-1"
 })(["display:flex;flex-direction:column;"]);
-var Controls = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div.withConfig({
+var Controls = styled_components__WEBPACK_IMPORTED_MODULE_6__["default"].div.withConfig({
   displayName: "SignupFormik__Controls",
   componentId: "sc-1kggeb7-2"
 })(["display:flex;justify-content:space-between;align-items:center;flex-direction:column;margin-top:10px;@media screen and (min-width:600px){flex-direction:row;}> div{width:100%;}"]);
-var InputsWrapper = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div.withConfig({
+var InputsWrapper = styled_components__WEBPACK_IMPORTED_MODULE_6__["default"].div.withConfig({
   displayName: "SignupFormik__InputsWrapper",
   componentId: "sc-1kggeb7-3"
-})(["border-left:5px solid transparent;padding:2px;transition:border-color 0.3s;", ""], function (_ref5) {
-  var hasError = _ref5.hasError;
-  return hasError && Object(styled_components__WEBPACK_IMPORTED_MODULE_4__["css"])(["border-color:'red';"]);
+})(["border-left:5px solid transparent;padding:2px;transition:border-color 0.3s;", ""], function (_ref6) {
+  var hasError = _ref6.hasError;
+  return hasError && Object(styled_components__WEBPACK_IMPORTED_MODULE_6__["css"])(["border-color:'red';"]);
 });
-var ServerError = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div.withConfig({
+var ServerError = styled_components__WEBPACK_IMPORTED_MODULE_6__["default"].div.withConfig({
   displayName: "SignupFormik__ServerError",
   componentId: "sc-1kggeb7-4"
 })(["color:'red';"]);
-var FieldWrapper = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div.withConfig({
+var FieldWrapper = styled_components__WEBPACK_IMPORTED_MODULE_6__["default"].div.withConfig({
   displayName: "SignupFormik__FieldWrapper",
   componentId: "sc-1kggeb7-5"
 })(["display:flex;flex-direction:column;&:not(:first-of-type){margin-top:15px;}input{font-size:1rem;line-height:1.5rem;padding-left:0.4rem;&::placeholder{opacity:0.4;}}"]);
-var BottomBtnWrapper = styled_components__WEBPACK_IMPORTED_MODULE_4__["default"].div.withConfig({
+var BottomBtnWrapper = styled_components__WEBPACK_IMPORTED_MODULE_6__["default"].div.withConfig({
   displayName: "SignupFormik__BottomBtnWrapper",
   componentId: "sc-1kggeb7-6"
 })(["@media screen and (max-width:599px){margin-top:15px;}"]);
@@ -49277,7 +49659,7 @@ var login = function login(_ref) {
       var _ref2 = Object(_babel_runtime_corejs2_helpers_esm_asyncToGenerator__WEBPACK_IMPORTED_MODULE_1__["default"])(
       /*#__PURE__*/
       _babel_runtime_corejs2_regenerator__WEBPACK_IMPORTED_MODULE_0___default.a.mark(function _callee(res) {
-        var data;
+        var data, err;
         return _babel_runtime_corejs2_regenerator__WEBPACK_IMPORTED_MODULE_0___default.a.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -49298,10 +49680,19 @@ var login = function login(_ref) {
                 }));
 
               case 5:
-                // return entire response if not OK
+                if (res.status === 401) {
+                  // reject if unauthorized
+                  err = {
+                    status: 401,
+                    message: 'Unathorized'
+                  };
+                  reject(err);
+                } // return entire response if not OK
+
+
                 resolve(res);
 
-              case 6:
+              case 7:
               case "end":
                 return _context.stop();
             }
@@ -49471,6 +49862,7 @@ var deleteUser = function deleteUser(authToken) {
       var reason = err.reason;
 
       if (reason === 'ValidationError') {
+        // eslint-disable-next-line
         console.log(err);
         reject(err);
       }
@@ -49581,6 +49973,20 @@ var getLocalItem = function getLocalItem(key) {
 
 /***/ }),
 
+/***/ "./utils/text.js":
+/*!***********************!*\
+  !*** ./utils/text.js ***!
+  \***********************/
+/*! exports provided: GENERAL_ERROR */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "GENERAL_ERROR", function() { return GENERAL_ERROR; });
+var GENERAL_ERROR = 'Sorry, something went wrong.';
+
+/***/ }),
+
 /***/ "./utils/theme.js":
 /*!************************!*\
   !*** ./utils/theme.js ***!
@@ -49655,7 +50061,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 0:
+/***/ 1:
 /*!*********************************************************************************************************************************************!*\
   !*** multi next-client-pages-loader?page=%2Flogin&absolutePagePath=%2FUsers%2Fmichaelschmerbeck%2Fyeoman%2Fclient%2Fsrc%2Fpages%2Flogin.js ***!
   \*********************************************************************************************************************************************/
@@ -49678,5 +50084,5 @@ module.exports = dll_e87fdfb005d1b68cff97;
 
 /***/ })
 
-},[[0,"static/runtime/webpack.js"]]]));;
+},[[1,"static/runtime/webpack.js"]]]));;
 //# sourceMappingURL=login.js.map

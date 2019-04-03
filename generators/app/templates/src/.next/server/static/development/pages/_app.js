@@ -2074,7 +2074,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 const logger = Object(redux_logger__WEBPACK_IMPORTED_MODULE_2__["createLogger"])({
-  predicate: (getState, action) => action.type !== actions_display__WEBPACK_IMPORTED_MODULE_8__["SET_DIMENSIONS"]
+  predicate: (getState, action) => action.type !== actions_display__WEBPACK_IMPORTED_MODULE_8__["SET_DIMENSIONS"],
 });
 
 function initializeStore(initialState = {}) {
@@ -2085,10 +2085,10 @@ function initializeStore(initialState = {}) {
       flashMessages: reducers_flashMessage__WEBPACK_IMPORTED_MODULE_5__["default"],
       isLoggingOut: reducers_auth__WEBPACK_IMPORTED_MODULE_3__["loggingOutReducer"],
       user: reducers_user__WEBPACK_IMPORTED_MODULE_6__["default"],
-      status: reducers_status__WEBPACK_IMPORTED_MODULE_7__["default"]
+      status: reducers_status__WEBPACK_IMPORTED_MODULE_7__["default"],
     }),
     initialState,
-    Object(redux__WEBPACK_IMPORTED_MODULE_0__["applyMiddleware"])(redux_thunk__WEBPACK_IMPORTED_MODULE_1___default.a, logger)
+    Object(redux__WEBPACK_IMPORTED_MODULE_0__["applyMiddleware"])(redux_thunk__WEBPACK_IMPORTED_MODULE_1___default.a, logger),
   );
 }
 
@@ -2209,8 +2209,8 @@ var login = function login(_ref) {
         return function (_x) {
           return _ref2.apply(this, arguments);
         };
-      }()).catch(function (error) {
-        reject(error);
+      }()).catch(function (err) {
+        return reject(err);
       });
     });
   };
@@ -2504,23 +2504,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_redux__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! prop-types */ "prop-types");
 /* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(prop_types__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! styled-components */ "styled-components");
-/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(styled_components__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var components_AsideSlider__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! components/AsideSlider */ "./components/AsideSlider.js");
-/* harmony import */ var components_icons_CloseIcon__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! components/icons/CloseIcon */ "./components/icons/CloseIcon.js");
-/* harmony import */ var components_atoms_IconButton__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! components/atoms/IconButton */ "./components/atoms/IconButton.js");
-/* harmony import */ var utils_theme__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! utils/theme */ "./utils/theme.js");
-/* harmony import */ var utils_theme__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(utils_theme__WEBPACK_IMPORTED_MODULE_8__);
-/* harmony import */ var utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! utils/hooks/useClearTimeout */ "./utils/hooks/useClearTimeout.js");
-/* harmony import */ var actions_display__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! actions/display */ "./actions/display.js");
-/* harmony import */ var actions_user__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! actions/user */ "./actions/user.js");
-/* harmony import */ var utils_http_user__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! utils/http/user */ "./utils/http/user.js");
+/* harmony import */ var components_AsideSlider__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! components/AsideSlider */ "./components/AsideSlider.js");
+/* harmony import */ var utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! utils/hooks/useClearTimeout */ "./utils/hooks/useClearTimeout.js");
+/* harmony import */ var actions_display__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! actions/display */ "./actions/display.js");
+/* harmony import */ var actions_user__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! actions/user */ "./actions/user.js");
+/* harmony import */ var actions_flashMessage__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! actions/flashMessage */ "./actions/flashMessage.js");
 
 var _jsxFileName = "/Users/michaelschmerbeck/yeoman/client/src/components/Aside.js";
-
-
-
-
 
 
 
@@ -2533,17 +2523,17 @@ var _jsxFileName = "/Users/michaelschmerbeck/yeoman/client/src/components/Aside.
 var Aside = function Aside(props) {
   var dispatch = props.dispatch;
   var timeout;
-  Object(utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_9__["default"])(timeout);
+  Object(utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_5__["default"])(timeout);
 
   var handleChangePassword = function handleChangePassword(evt) {
     evt.preventDefault();
-    dispatch(Object(actions_display__WEBPACK_IMPORTED_MODULE_10__["showChangePasswordModal"])());
-    dispatch(Object(actions_display__WEBPACK_IMPORTED_MODULE_10__["closeMenu"])());
+    dispatch(Object(actions_display__WEBPACK_IMPORTED_MODULE_6__["showChangePasswordModal"])());
+    dispatch(Object(actions_display__WEBPACK_IMPORTED_MODULE_6__["closeMenu"])());
   };
 
   var openAccountSettings = function openAccountSettings(evt) {
     evt.preventDefault();
-    dispatch(Object(actions_display__WEBPACK_IMPORTED_MODULE_10__["closeMenu"])());
+    dispatch(Object(actions_display__WEBPACK_IMPORTED_MODULE_6__["closeMenu"])());
   };
 
   var openDeleteAccount = function openDeleteAccount(evt) {
@@ -2552,22 +2542,26 @@ var Aside = function Aside(props) {
     var modal = {
       onSuccess: function onSuccess() {
         // send action to delete account
-        dispatch(Object(utils_http_user__WEBPACK_IMPORTED_MODULE_12__["deleteUser"])()).then(function (isSuccess) {
+        dispatch(Object(actions_user__WEBPACK_IMPORTED_MODULE_7__["deleteUser"])()).then(function (isSuccess) {
           if (isSuccess) {
-            dispatch(Object(actions_user__WEBPACK_IMPORTED_MODULE_11__["clearUserState"])());
+            dispatch(Object(actions_user__WEBPACK_IMPORTED_MODULE_7__["clearUserState"])());
             timeout = setTimeout(function () {
-              dispatch(Object(actions_display__WEBPACK_IMPORTED_MODULE_10__["closeModal"])());
+              dispatch(Object(actions_display__WEBPACK_IMPORTED_MODULE_6__["closeModal"])());
+              dispatch(Object(actions_flashMessage__WEBPACK_IMPORTED_MODULE_8__["flashSuccess"])('User successfully deleted!'));
             }, 500);
           }
         }).catch(function (err) {
+          // eslint-disable-next-line
           console.log({
             err: err
           });
+          dispatch(Object(actions_flashMessage__WEBPACK_IMPORTED_MODULE_8__["flashError"])());
         });
       },
       onCancel: function onCancel() {
         // optional callback
         // modal will close itself eitherway
+        // eslint-disable-next-line
         console.log('onCancel');
       },
       renderPrompt: function renderPrompt() {
@@ -2577,19 +2571,19 @@ var Aside = function Aside(props) {
           },
           __source: {
             fileName: _jsxFileName,
-            lineNumber: 63
+            lineNumber: 62
           },
           __self: this
         }, react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("p", {
           __source: {
             fileName: _jsxFileName,
-            lineNumber: 64
+            lineNumber: 63
           },
           __self: this
         }, "Are you sure you want to delete this account?"), react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("p", {
           __source: {
             fileName: _jsxFileName,
-            lineNumber: 65
+            lineNumber: 64
           },
           __self: this
         }, "This action is ", react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("span", {
@@ -2598,28 +2592,28 @@ var Aside = function Aside(props) {
           },
           __source: {
             fileName: _jsxFileName,
-            lineNumber: 66
+            lineNumber: 65
           },
           __self: this
         }, "PERMANENT"), "."));
       }
     };
-    dispatch(Object(actions_display__WEBPACK_IMPORTED_MODULE_10__["closeMenu"])());
-    dispatch(Object(actions_display__WEBPACK_IMPORTED_MODULE_10__["showModal"])(true, modal));
+    dispatch(Object(actions_display__WEBPACK_IMPORTED_MODULE_6__["closeMenu"])());
+    dispatch(Object(actions_display__WEBPACK_IMPORTED_MODULE_6__["showModal"])(true, modal));
   };
 
-  return react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(components_AsideSlider__WEBPACK_IMPORTED_MODULE_5__["default"], Object(_babel_runtime_corejs2_helpers_esm_extends__WEBPACK_IMPORTED_MODULE_0__["default"])({}, props, {
+  return react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(components_AsideSlider__WEBPACK_IMPORTED_MODULE_4__["default"], Object(_babel_runtime_corejs2_helpers_esm_extends__WEBPACK_IMPORTED_MODULE_0__["default"])({}, props, {
     renderMenu: function renderMenu() {
       return react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(react__WEBPACK_IMPORTED_MODULE_1___default.a.Fragment, null, react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("ul", {
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 79
+          lineNumber: 78
         },
         __self: this
       }, react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("li", {
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 80
+          lineNumber: 79
         },
         __self: this
       }, react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("a", {
@@ -2627,13 +2621,13 @@ var Aside = function Aside(props) {
         href: "/change-password",
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 81
+          lineNumber: 80
         },
         __self: this
       }, "Change My Password")), react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("li", {
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 85
+          lineNumber: 84
         },
         __self: this
       }, react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("a", {
@@ -2641,7 +2635,7 @@ var Aside = function Aside(props) {
         href: "/account-settings",
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 86
+          lineNumber: 85
         },
         __self: this
       }, "Account Settings"))), react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("h3", {
@@ -2650,19 +2644,19 @@ var Aside = function Aside(props) {
         },
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 91
+          lineNumber: 90
         },
         __self: this
       }, "Dangerous!"), react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("ul", {
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 92
+          lineNumber: 91
         },
         __self: this
       }, react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("li", {
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 93
+          lineNumber: 92
         },
         __self: this
       }, react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("a", {
@@ -2670,14 +2664,14 @@ var Aside = function Aside(props) {
         href: "#!",
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 94
+          lineNumber: 93
         },
         __self: this
       }, "Delete Account"))));
     },
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 75
+      lineNumber: 74
     },
     __self: this
   }));
@@ -3733,198 +3727,6 @@ var StyledButton = styled_components__WEBPACK_IMPORTED_MODULE_1___default.a.butt
 
 /***/ }),
 
-/***/ "./components/atoms/Checkbox.js":
-/*!**************************************!*\
-  !*** ./components/atoms/Checkbox.js ***!
-  \**************************************/
-/*! exports provided: default */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _babel_runtime_corejs2_helpers_esm_classCallCheck__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/classCallCheck */ "../node_modules/@babel/runtime-corejs2/helpers/esm/classCallCheck.js");
-/* harmony import */ var _babel_runtime_corejs2_helpers_esm_createClass__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/createClass */ "../node_modules/@babel/runtime-corejs2/helpers/esm/createClass.js");
-/* harmony import */ var _babel_runtime_corejs2_helpers_esm_possibleConstructorReturn__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/possibleConstructorReturn */ "../node_modules/@babel/runtime-corejs2/helpers/esm/possibleConstructorReturn.js");
-/* harmony import */ var _babel_runtime_corejs2_helpers_esm_getPrototypeOf__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/getPrototypeOf */ "../node_modules/@babel/runtime-corejs2/helpers/esm/getPrototypeOf.js");
-/* harmony import */ var _babel_runtime_corejs2_helpers_esm_assertThisInitialized__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/assertThisInitialized */ "../node_modules/@babel/runtime-corejs2/helpers/esm/assertThisInitialized.js");
-/* harmony import */ var _babel_runtime_corejs2_helpers_esm_inherits__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/inherits */ "../node_modules/@babel/runtime-corejs2/helpers/esm/inherits.js");
-/* harmony import */ var _babel_runtime_corejs2_helpers_esm_defineProperty__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @babel/runtime-corejs2/helpers/esm/defineProperty */ "../node_modules/@babel/runtime-corejs2/helpers/esm/defineProperty.js");
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! react */ "react");
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_7___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_7__);
-/* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! prop-types */ "prop-types");
-/* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(prop_types__WEBPACK_IMPORTED_MODULE_8__);
-/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! styled-components */ "styled-components");
-/* harmony import */ var styled_components__WEBPACK_IMPORTED_MODULE_9___default = /*#__PURE__*/__webpack_require__.n(styled_components__WEBPACK_IMPORTED_MODULE_9__);
-/* harmony import */ var utils_theme__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! utils/theme */ "./utils/theme.js");
-/* harmony import */ var utils_theme__WEBPACK_IMPORTED_MODULE_10___default = /*#__PURE__*/__webpack_require__.n(utils_theme__WEBPACK_IMPORTED_MODULE_10__);
-/* harmony import */ var components_icons_Checkbox__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! components/icons/Checkbox */ "./components/icons/Checkbox.js");
-/* harmony import */ var components_icons_Checkmark__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! components/icons/Checkmark */ "./components/icons/Checkmark.js");
-
-
-
-
-
-
-
-var _jsxFileName = "/Users/michaelschmerbeck/yeoman/client/src/components/atoms/Checkbox.js";
-
-
-
-
-
-
-
-var Checkbox =
-/*#__PURE__*/
-function (_PureComponent) {
-  Object(_babel_runtime_corejs2_helpers_esm_inherits__WEBPACK_IMPORTED_MODULE_5__["default"])(Checkbox, _PureComponent);
-
-  function Checkbox(props) {
-    var _this;
-
-    Object(_babel_runtime_corejs2_helpers_esm_classCallCheck__WEBPACK_IMPORTED_MODULE_0__["default"])(this, Checkbox);
-
-    _this = Object(_babel_runtime_corejs2_helpers_esm_possibleConstructorReturn__WEBPACK_IMPORTED_MODULE_2__["default"])(this, Object(_babel_runtime_corejs2_helpers_esm_getPrototypeOf__WEBPACK_IMPORTED_MODULE_3__["default"])(Checkbox).call(this, props));
-
-    Object(_babel_runtime_corejs2_helpers_esm_defineProperty__WEBPACK_IMPORTED_MODULE_6__["default"])(Object(_babel_runtime_corejs2_helpers_esm_assertThisInitialized__WEBPACK_IMPORTED_MODULE_4__["default"])(_this), "handleChange", function (e) {
-      var checked = e.target.checked;
-
-      _this.setState({
-        checked: checked
-      });
-
-      var onChange = _this.props.onChange;
-      onChange && onChange(checked);
-    });
-
-    _this.state = {
-      checked: props.initialValue || false
-    };
-    return _this;
-  }
-
-  Object(_babel_runtime_corejs2_helpers_esm_createClass__WEBPACK_IMPORTED_MODULE_1__["default"])(Checkbox, [{
-    key: "render",
-    value: function render() {
-      var checked = this.state.checked;
-      var _this$props = this.props,
-          outline = _this$props.outline,
-          style = _this$props.style,
-          width = _this$props.width,
-          label = _this$props.label,
-          visible = _this$props.visible,
-          fill = _this$props.fill,
-          emptyFill = _this$props.emptyFill,
-          CustomLabel = _this$props.CustomLabel;
-      var IconComponent = checked ? components_icons_Checkbox__WEBPACK_IMPORTED_MODULE_11__["CheckboxChecked"] : outline ? components_icons_Checkmark__WEBPACK_IMPORTED_MODULE_12__["default"] : components_icons_Checkbox__WEBPACK_IMPORTED_MODULE_11__["Checkbox"];
-      var labelComponent;
-
-      if (CustomLabel) {
-        labelComponent = react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement(CustomLabel, {
-          __source: {
-            fileName: _jsxFileName,
-            lineNumber: 47
-          },
-          __self: this
-        });
-      } else if (label) {
-        labelComponent = react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement("span", {
-          __source: {
-            fileName: _jsxFileName,
-            lineNumber: 49
-          },
-          __self: this
-        }, label);
-      }
-
-      var getsOutline = outline && !checked;
-      var _fill = fill;
-
-      if (getsOutline) {
-        _fill = 'transparent';
-      }
-
-      return react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement(Container, {
-        visible: visible,
-        style: style,
-        __source: {
-          fileName: _jsxFileName,
-          lineNumber: 60
-        },
-        __self: this
-      }, react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement(Input, {
-        id: "customCheckbox",
-        type: "checkbox",
-        onChange: this.handleChange,
-        __source: {
-          fileName: _jsxFileName,
-          lineNumber: 61
-        },
-        __self: this
-      }), react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement(Label, {
-        htmlFor: "customCheckbox",
-        __source: {
-          fileName: _jsxFileName,
-          lineNumber: 66
-        },
-        __self: this
-      }, react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement("div", {
-        __source: {
-          fileName: _jsxFileName,
-          lineNumber: 67
-        },
-        __self: this
-      }, react__WEBPACK_IMPORTED_MODULE_7___default.a.createElement(IconComponent, {
-        style: {
-          float: 'left',
-          marginRight: '10px'
-        },
-        width: width || 20,
-        fill: _fill,
-        __source: {
-          fileName: _jsxFileName,
-          lineNumber: 68
-        },
-        __self: this
-      })), labelComponent));
-    }
-  }]);
-
-  return Checkbox;
-}(react__WEBPACK_IMPORTED_MODULE_7__["PureComponent"]);
-
-Checkbox.propTypes = {
-  initialValue: prop_types__WEBPACK_IMPORTED_MODULE_8___default.a.bool,
-  visible: prop_types__WEBPACK_IMPORTED_MODULE_8___default.a.bool,
-  fill: prop_types__WEBPACK_IMPORTED_MODULE_8___default.a.string,
-  emptyFill: prop_types__WEBPACK_IMPORTED_MODULE_8___default.a.string,
-  // optional fill when checkbox is not checked
-  label: prop_types__WEBPACK_IMPORTED_MODULE_8___default.a.string,
-  style: prop_types__WEBPACK_IMPORTED_MODULE_8___default.a.object,
-  onChange: prop_types__WEBPACK_IMPORTED_MODULE_8___default.a.func,
-  CustomLabel: prop_types__WEBPACK_IMPORTED_MODULE_8___default.a.func,
-  outline: prop_types__WEBPACK_IMPORTED_MODULE_8___default.a.bool,
-  width: prop_types__WEBPACK_IMPORTED_MODULE_8___default.a.oneOfType([prop_types__WEBPACK_IMPORTED_MODULE_8___default.a.string, prop_types__WEBPACK_IMPORTED_MODULE_8___default.a.number])
-};
-/* harmony default export */ __webpack_exports__["default"] = (Checkbox);
-var Container = styled_components__WEBPACK_IMPORTED_MODULE_9___default.a.div.withConfig({
-  displayName: "Checkbox__Container",
-  componentId: "ipb3pu-0"
-})(["position:relative;display:flex;justify-content:center;align-items:center;transition:all 0.3s;opacity:1;", ""], function (_ref) {
-  var visible = _ref.visible;
-  return !visible && Object(styled_components__WEBPACK_IMPORTED_MODULE_9__["css"])(["opacity:0;pointer-events:none;"]);
-});
-var Input = styled_components__WEBPACK_IMPORTED_MODULE_9___default.a.input.withConfig({
-  displayName: "Checkbox__Input",
-  componentId: "ipb3pu-1"
-})(["position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;margin:0;opacity:0;cursor:pointer;"]);
-var Label = styled_components__WEBPACK_IMPORTED_MODULE_9___default.a.label.withConfig({
-  displayName: "Checkbox__Label",
-  componentId: "ipb3pu-2"
-})(["display:flex;justify-content:center;align-items:center;color:", ";font-size:0.8rem;margin-left:5px;cursor:pointer;"], utils_theme__WEBPACK_IMPORTED_MODULE_10__["colors"].Gray);
-
-/***/ }),
-
 /***/ "./components/atoms/IconButton.js":
 /*!****************************************!*\
   !*** ./components/atoms/IconButton.js ***!
@@ -4367,12 +4169,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var formik__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! formik */ "formik");
 /* harmony import */ var formik__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(formik__WEBPACK_IMPORTED_MODULE_5__);
 /* harmony import */ var components_atoms_Button__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! components/atoms/Button */ "./components/atoms/Button.js");
-/* harmony import */ var components_atoms_Checkbox__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! components/atoms/Checkbox */ "./components/atoms/Checkbox.js");
-/* harmony import */ var actions_auth__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! actions/auth */ "./actions/auth.js");
-/* harmony import */ var actions_user__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! actions/user */ "./actions/user.js");
-/* harmony import */ var utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! utils/hooks/useClearTimeout */ "./utils/hooks/useClearTimeout.js");
+/* harmony import */ var actions_flashMessage__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! actions/flashMessage */ "./actions/flashMessage.js");
+/* harmony import */ var actions_user__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! actions/user */ "./actions/user.js");
+/* harmony import */ var utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! utils/hooks/useClearTimeout */ "./utils/hooks/useClearTimeout.js");
 var _jsxFileName = "/Users/michaelschmerbeck/yeoman/client/src/components/formik/ChangePasswordFormik.js";
-
 
 
 
@@ -4393,7 +4193,7 @@ var renderField = function renderField(type, name, placeholder) {
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FieldWrapper, {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 24
+      lineNumber: 23
     },
     __self: this
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_5__["Field"], {
@@ -4402,7 +4202,7 @@ var renderField = function renderField(type, name, placeholder) {
     placeholder: placeholder,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 25
+      lineNumber: 24
     },
     __self: this
   }), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_5__["ErrorMessage"], {
@@ -4411,7 +4211,7 @@ var renderField = function renderField(type, name, placeholder) {
     style: errorStyles,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 26
+      lineNumber: 25
     },
     __self: this
   }));
@@ -4421,15 +4221,19 @@ var ChangePasswordFormik = function ChangePasswordFormik(_ref) {
   var dispatch = _ref.dispatch,
       router = _ref.router,
       onRequestClose = _ref.onRequestClose,
+      bindResetForm = _ref.bindResetForm,
       setLoading = _ref.setLoading,
-      setLoadingText = _ref.setLoadingText;
+      setLoadingText = _ref.setLoadingText,
+      doneLoading = _ref.doneLoading;
   var submitText = 'submitText';
   var timeoutSubmit;
-  Object(utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_10__["default"])(timeoutSubmit);
+  Object(utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_9__["default"])(timeoutSubmit);
+  var timeoutReset;
+  Object(utils_hooks_useClearTimeout__WEBPACK_IMPORTED_MODULE_9__["default"])(timeoutReset);
   return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(FormikContainer, {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 43
+      lineNumber: 45
     },
     __self: this
   }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_5__["Formik"], {
@@ -4446,8 +4250,8 @@ var ChangePasswordFormik = function ChangePasswordFormik(_ref) {
         errors.password = 'Required';
       } else if (!values.newPassword) {
         errors.newPassword = 'Required';
-      } else if (values.newPassword.length < 8) {
-        errors.password = 'Password must be a minimum of 9 characters.';
+      } else if (values.newPassword.length < 10) {
+        errors.newPassword = 'Password must be a minimum of 10 characters.';
       } else if (!values.rePassword) {
         errors.rePassword = 'Required';
       } else if (values.newPassword !== values.rePassword) {
@@ -4458,78 +4262,88 @@ var ChangePasswordFormik = function ChangePasswordFormik(_ref) {
     },
     onSubmit: function onSubmit(values, _ref2) {
       var setSubmitting = _ref2.setSubmitting,
-          setFieldError = _ref2.setFieldError;
+          setFieldValue = _ref2.setFieldValue,
+          setFieldError = _ref2.setFieldError,
+          resetForm = _ref2.resetForm;
       setLoading(true);
-      setLoadingText('Signing up...');
-      var user = {
-        password: values.newPassword
-      };
+      setLoadingText('Updating password...');
       timeoutSubmit = setTimeout(function () {
-        setLoading(false);
-        setLoadingText('');
-        dispatch(Object(actions_user__WEBPACK_IMPORTED_MODULE_9__["updateUser"])(user)).then(function (res) {
-          console.log({
-            res: res
-          });
-        }).catch(function (err) {
-          return console.log({
-            err: err
-          });
+        doneLoading();
+        var userCreds = {
+          password: values.password,
+          newPassword: values.newPassword
+        };
+        dispatch(Object(actions_user__WEBPACK_IMPORTED_MODULE_8__["updateUser"])(userCreds)).then(function (res) {
+          onRequestClose();
+          dispatch(Object(actions_flashMessage__WEBPACK_IMPORTED_MODULE_7__["flashSuccess"])('Successfully updated password!'));
+          timeoutReset = setTimeout(resetForm, 400);
+        }).catch(function (error) {
+          if (error.code === 401) {
+            setFieldError('password', 'Password Incorrect.');
+          }
+
+          if (error.message) {
+            dispatch(Object(actions_flashMessage__WEBPACK_IMPORTED_MODULE_7__["flashError"])(error.message));
+          } else {
+            dispatch(Object(actions_flashMessage__WEBPACK_IMPORTED_MODULE_7__["flashError"])());
+          }
         });
         setSubmitting(false);
       }, 400);
     },
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 44
+      lineNumber: 46
     },
     __self: this
   }, function (_ref3) {
     var isSubmitting = _ref3.isSubmitting,
         errors = _ref3.errors,
         touched = _ref3.touched,
-        submitCount = _ref3.submitCount;
+        submitCount = _ref3.submitCount,
+        resetForm = _ref3.resetForm;
+    bindResetForm(resetForm);
     return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(formik__WEBPACK_IMPORTED_MODULE_5__["Form"], {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 88
+        lineNumber: 106
       },
       __self: this
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(Container, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 89
+        lineNumber: 107
       },
       __self: this
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(Flex, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 90
+        lineNumber: 108
       },
       __self: this
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(InputsWrapper, {
       hasError: errors.server,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 91
+        lineNumber: 109
       },
       __self: this
     }, renderField('password', 'password', 'Current Password'), renderField('password', 'newPassword', 'New Password'), renderField('password', 'rePassword', 'Re-enter New Password')), errors.server && react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(ServerError, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 100
+        lineNumber: 118
       },
       __self: this
     }, errors.server)), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(Controls, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 102
+        lineNumber: 120
       },
       __self: this
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(BottomBtnWrapper, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 103
+        lineNumber: 121
       },
       __self: this
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(components_atoms_Button__WEBPACK_IMPORTED_MODULE_6__["default"], {
@@ -4540,13 +4354,13 @@ var ChangePasswordFormik = function ChangePasswordFormik(_ref) {
       onClick: onRequestClose,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 104
+        lineNumber: 122
       },
       __self: this
     }, "Cancel")), react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(BottomBtnWrapper, {
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 112
+        lineNumber: 130
       },
       __self: this
     }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(components_atoms_Button__WEBPACK_IMPORTED_MODULE_6__["default"], {
@@ -4558,7 +4372,7 @@ var ChangePasswordFormik = function ChangePasswordFormik(_ref) {
       disabled: isSubmitting,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 113
+        lineNumber: 131
       },
       __self: this
     }, submitText || 'Submit')))));
@@ -4569,8 +4383,10 @@ ChangePasswordFormik.propTypes = {
   onRequestClose: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.func.isRequired,
   dispatch: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.func.isRequired,
   router: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.object.isRequired,
-  setLoading: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.func,
-  setLoadingText: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.func
+  bindResetForm: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.func.isRequired,
+  doneLoading: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.func.isRequired,
+  setLoading: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.func.isRequired,
+  setLoadingText: prop_types__WEBPACK_IMPORTED_MODULE_3___default.a.func.isRequired
 };
 
 var mapStateToProps = function mapStateToProps(state) {
@@ -4625,82 +4441,6 @@ var BottomBtnWrapper = styled_components__WEBPACK_IMPORTED_MODULE_4___default.a.
   displayName: "ChangePasswordFormik__BottomBtnWrapper",
   componentId: "sc-1fbq0j7-7"
 })(["width:49%;@media screen and (max-width:599px){margin-top:15px;}"]);
-
-/***/ }),
-
-/***/ "./components/icons/Checkbox.js":
-/*!**************************************!*\
-  !*** ./components/icons/Checkbox.js ***!
-  \**************************************/
-/*! exports provided: Checkbox, CheckboxChecked */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-__webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Checkbox", function() { return Checkbox; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "CheckboxChecked", function() { return CheckboxChecked; });
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "react");
-/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var utils_propTypes__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! utils/propTypes */ "./utils/propTypes.js");
-var _jsxFileName = "/Users/michaelschmerbeck/yeoman/client/src/components/icons/Checkbox.js";
-
-
-var Checkbox = function Checkbox(_ref) {
-  var fill = _ref.fill,
-      _ref$width = _ref.width,
-      width = _ref$width === void 0 ? '100%' : _ref$width,
-      _ref$style = _ref.style,
-      style = _ref$style === void 0 ? {} : _ref$style;
-  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("svg", {
-    style: style,
-    width: width,
-    xmlns: "http://www.w3.org/2000/svg",
-    viewBox: "0 0 100 100",
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 5
-    },
-    __self: this
-  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("path", {
-    fill: fill,
-    width: width,
-    d: "M82 90H18c-4.4 0-8-3.6-8-8V18c0-4.4 3.6-8 8-8h64c4.4 0 8 3.6 8 8v64c0 4.4-3.6 8-8 8zm-7.4-56.7c-1.9-1.7-4.9-1.7-6.7 0l-25.7 0",
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 11
-    },
-    __self: this
-  }));
-};
-Checkbox.propTypes = utils_propTypes__WEBPACK_IMPORTED_MODULE_1__["SVGPropTypes"];
-var CheckboxChecked = function CheckboxChecked(_ref2) {
-  var fill = _ref2.fill,
-      _ref2$width = _ref2.width,
-      width = _ref2$width === void 0 ? '100%' : _ref2$width,
-      _ref2$style = _ref2.style,
-      style = _ref2$style === void 0 ? {} : _ref2$style;
-  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("svg", {
-    style: style,
-    width: width,
-    xmlns: "http://www.w3.org/2000/svg",
-    viewBox: "0 0 100 100",
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 21
-    },
-    __self: this
-  }, react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("path", {
-    fill: fill,
-    width: width,
-    d: "M82 90H18c-4.4 0-8-3.6-8-8V18c0-4.4 3.6-8 8-8h64c4.4 0 8 3.6 8 8v64c0 4.4-3.6 8-8 8zm-7.4-56.7c-1.9-1.7-4.9-1.7-6.7 0l-25.7 24-10.1-9.4c-1.9-1.7-4.9-1.7-6.7 0-1.9 1.7-1.9 4.5 0 6.3l13.4 12.5c1.9 1.7 4.9 1.7 6.7 0l29.1-27.2c1.9-1.7 1.9-4.5 0-6.2z",
-    __source: {
-      fileName: _jsxFileName,
-      lineNumber: 27
-    },
-    __self: this
-  }));
-};
-CheckboxChecked.propTypes = utils_propTypes__WEBPACK_IMPORTED_MODULE_1__["SVGPropTypes"];
 
 /***/ }),
 
@@ -5236,7 +4976,7 @@ var _jsxFileName = "/Users/michaelschmerbeck/yeoman/client/src/components/modals
 
 var ChangePasswordModal = function ChangePasswordModal(_ref) {
   var isOpen = _ref.isOpen,
-      onRequestClose = _ref.onRequestClose;
+      _onRequestClose = _ref.onRequestClose;
 
   var _useState = Object(react__WEBPACK_IMPORTED_MODULE_1__["useState"])(false),
       _useState2 = Object(_babel_runtime_corejs2_helpers_esm_slicedToArray__WEBPACK_IMPORTED_MODULE_0__["default"])(_useState, 2),
@@ -5248,10 +4988,20 @@ var ChangePasswordModal = function ChangePasswordModal(_ref) {
       loadingText = _useState4[0],
       setLoadingText = _useState4[1];
 
+  var doneLoading = function doneLoading() {
+    setLoading(false);
+    setLoadingText('');
+  };
+
+  var resetForm;
   return react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(components_modals___WEBPACK_IMPORTED_MODULE_4__["default"], {
     clickOutsideClose: false,
     isOpen: isOpen,
-    onRequestClose: onRequestClose,
+    onRequestClose: function onRequestClose() {
+      resetForm();
+
+      _onRequestClose();
+    },
     loading: loading,
     loadingText: loadingText,
     maxWidth: "400px",
@@ -5260,35 +5010,39 @@ var ChangePasswordModal = function ChangePasswordModal(_ref) {
       return react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement("div", {
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 21
+          lineNumber: 31
         },
         __self: this
       }, react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(Title, {
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 22
+          lineNumber: 32
         },
         __self: this
       }, "Change Password"));
     },
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 12
+      lineNumber: 19
     },
     __self: this
   }, react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(Container, {
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 26
+      lineNumber: 36
     },
     __self: this
   }, react__WEBPACK_IMPORTED_MODULE_1___default.a.createElement(components_formik_ChangePasswordFormik__WEBPACK_IMPORTED_MODULE_5__["default"], {
-    onRequestClose: onRequestClose,
+    onRequestClose: _onRequestClose,
+    doneLoading: doneLoading,
     setLoading: setLoading,
     setLoadingText: setLoadingText,
+    bindResetForm: function bindResetForm(_resetForm) {
+      resetForm = _resetForm;
+    },
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 27
+      lineNumber: 37
     },
     __self: this
   })));
@@ -6639,7 +6393,7 @@ var login = function login(_ref) {
       var _ref2 = Object(_babel_runtime_corejs2_helpers_esm_asyncToGenerator__WEBPACK_IMPORTED_MODULE_1__["default"])(
       /*#__PURE__*/
       _babel_runtime_corejs2_regenerator__WEBPACK_IMPORTED_MODULE_0___default.a.mark(function _callee(res) {
-        var data;
+        var data, err;
         return _babel_runtime_corejs2_regenerator__WEBPACK_IMPORTED_MODULE_0___default.a.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -6660,10 +6414,19 @@ var login = function login(_ref) {
                 }));
 
               case 5:
-                // return entire response if not OK
+                if (res.status === 401) {
+                  // reject if unauthorized
+                  err = {
+                    status: 401,
+                    message: 'Unathorized'
+                  };
+                  reject(err);
+                } // return entire response if not OK
+
+
                 resolve(res);
 
-              case 6:
+              case 7:
               case "end":
                 return _context.stop();
             }
@@ -6833,6 +6596,7 @@ var deleteUser = function deleteUser(authToken) {
       var reason = err.reason;
 
       if (reason === 'ValidationError') {
+        // eslint-disable-next-line
         console.log(err);
         reject(err);
       }
