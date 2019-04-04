@@ -1,19 +1,20 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import PropTypes from 'prop-types';
+import React from "react";
+import { connect } from "react-redux";
+import PropTypes from "prop-types";
+import styled, { css } from "styled-components";
 
-import AsideSlider from 'components/AsideSlider';
+import AsideSlider from "components/AsideSlider";
 
-import useClearTimeout from 'utils/hooks/useClearTimeout';
+import useClearTimeout from "utils/hooks/useClearTimeout";
 
 import {
   showModal,
   closeModal,
   closeMenu,
-  showChangePasswordModal,
-} from 'actions/display';
-import { clearUserState, deleteUser } from 'actions/user';
-import { flashSuccess, flashError } from 'actions/flashMessage';
+  showChangePasswordModal
+} from "actions/display";
+import { clearUserState, deleteUser } from "actions/user";
+import { flashSuccess, flashError } from "actions/flashMessage";
 
 const Aside = props => {
   const { dispatch } = props;
@@ -42,7 +43,7 @@ const Aside = props => {
               dispatch(clearUserState());
               timeout = setTimeout(() => {
                 dispatch(closeModal());
-                dispatch(flashSuccess('User successfully deleted!'));
+                dispatch(flashSuccess("User successfully deleted!"));
               }, 500);
             }
           })
@@ -56,16 +57,16 @@ const Aside = props => {
         // optional callback
         // modal will close itself eitherway
         // eslint-disable-next-line
-        console.log('onCancel');
+        console.log("onCancel");
       },
       renderPrompt: () => (
-        <div style={{ textAlign: 'center' }}>
+        <div style={{ textAlign: "center" }}>
           <p>Are you sure you want to delete this account?</p>
           <p>
-            This action is <span style={{ color: 'red' }}>PERMANENT</span>.
+            This action is <span style={{ color: "red" }}>PERMANENT</span>.
           </p>
         </div>
-      ),
+      )
     };
     dispatch(closeMenu());
     dispatch(showModal(true, modal));
@@ -75,26 +76,26 @@ const Aside = props => {
       {...props}
       renderMenu={() => (
         <>
-          <ul>
-            <li>
+          <List>
+            <Item>
               <a onClick={handleChangePassword} href="/change-password">
                 Change My Password
               </a>
-            </li>
-            <li>
+            </Item>
+            <Item>
               <a onClick={openAccountSettings} href="/account-settings">
                 Account Settings
               </a>
-            </li>
-          </ul>
-          <h3 style={{ color: 'red' }}>Dangerous!</h3>
-          <ul>
-            <li>
+            </Item>
+          </List>
+          <h3 style={{ color: "red" }}>Dangerous!</h3>
+          <List>
+            <Item>
               <a onClick={openDeleteAccount} href="#!">
                 Delete Account
               </a>
-            </li>
-          </ul>
+            </Item>
+          </List>
         </>
       )}
     />
@@ -104,13 +105,32 @@ const Aside = props => {
 Aside.propTypes = {
   menuIsOpen: PropTypes.bool.isRequired,
   onRequestClose: PropTypes.func.isRequired,
-  dispatch: PropTypes.func.isRequired,
+  dispatch: PropTypes.func.isRequired
 };
 
 const mapStateToProps = ({ display }) => {
   const { menuIsOpen } = display;
   return {
-    menuIsOpen,
+    menuIsOpen
   };
 };
 export default connect(mapStateToProps)(Aside);
+
+const List = styled.ul`
+  list-style: none;
+`;
+const Item = styled.li`
+  &:hover {
+    a {
+      color: ${({ theme }) => theme.colors.Compliment};
+    }
+  }
+  a {
+    color: ${({ theme }) => theme.colors.Primary};
+    display: inline-block;
+    width: 100%;
+    line-height: 1.6rem;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+`;
